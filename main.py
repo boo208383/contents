@@ -176,3 +176,12 @@ if st.session_state.search_clicked:
         
         # 데이터프레임 노출
         st.dataframe(
+            result_df[['플랫폼', '카테고리', '제목', '장르', '시간(분)', '평점', '연령제한']],
+            use_container_width=True,
+            hide_index=True
+        )
+        
+        # 하단 통계 그래프 (스카이 블루 단색 차트)
+        st.write("")
+        st.write("▼ **플랫폼별 추천 비중 통계**")
+        st.bar_chart(filtered_df['플랫폼'].value_counts(), color="#38BDF8")
