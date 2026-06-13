@@ -3,7 +3,7 @@ import pandas as pd
 import time
 
 # ==========================================
-# 1. 페이지 기본 설정 및 세련된 테크 다크 테마 CSS
+# 1. 페이지 기본 설정 및 무조건 블루로 바꾸는 CSS
 # ==========================================
 st.set_page_config(
     page_title="OTT CONTENTS SELECTOR", 
@@ -11,37 +11,45 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 전체 UI 및 세부 입력창(선택지) 색상까지 제어하는 CSS
+# 스트림릿의 모든 요소를 샅샅이 뒤져서 블루로 강제 정복하는 CSS
 st.markdown("""
     <style>
-    /* 1. 전체 배경 및 텍스트 (딥 미드나잇 그레이) */
+    /* 1. 전체 배경 및 텍스트 */
     .main { background-color: #0F172A; color: #F8FAFC; }
     .main .block-container { padding-top: 4rem; padding-bottom: 4rem; max-width: 950px; }
     
     /* 2. 타이틀 및 헤더 스타일 */
-    h1 { color: #38BDF8; font-weight: 900; letter-spacing: -0.5px; text-align: center; font-family: 'Inter', sans-serif; }
+    h1 { color: #38BDF8; font-weight: 900; text-align: center; font-family: 'Inter', sans-serif; }
     h3 { color: #F8FAFC; font-weight: 700; margin-top: 2rem; border-left: 4px solid #38BDF8; padding-left: 10px; }
     .subtitle { text-align: center; color: #94A3B8; font-size: 1.1rem; margin-bottom: 3rem; }
-    
-    /* 3. 기본 라벨 폰트 색상 조정 */
     label, .stMultiSelect label, .stSlider label, .stCheckbox label { color: #E2E8F0 !important; font-weight: 600; }
     
-    /* 4. [핵심] 멀티셀렉트(선택창) 내부 색상 커스텀 */
-    /* 선택박스 테두리 포커스 되었을 때 */
-    div[data-baseweb="select"] > div:focus-within { border-color: #38BDF8 !important; box-shadow: 0 0 0 1px #38BDF8 !important; }
-    /* 멀티셀렉트 내부에 선택된 칩(Chip)의 배경색과 글자색 */
-    div[data-testid="stMultiSelectTag"] { background-color: #1E293B !important; border: 1px solid #334155 !important; color: #38BDF8 !important; }
-    /* 칩 내부의 x 삭제 버튼 색상 */
-    div[data-testid="stMultiSelectTag"] span { color: #38BDF8 !important; }
+    /* 3. [긴급 수리] 멀티셀렉트 내부 빨간 태그 무조건 파란색으로 덮어쓰기 */
+    div[data-testid="stMultiSelectTag"] { 
+        background-color: #0284C7 !important; /* 배경을 진한 블루로 */
+        color: #FFFFFF !important;            /* 글자는 화이트 */
+        border: none !important;
+        border-radius: 4px !important;
+    }
+    div[data-testid="stMultiSelectTag"] span { color: #FFFFFF !important; }
+    div[data-testid="stMultiSelectTag"] button { color: #FFFFFF !important; }
     
-    /* 5. [핵심] 슬라이더 및 체크박스 색상 커스텀 */
-    /* 슬라이더 채워지는 바와 조절 핸들 색상 */
-    div[data-testid="stSlider"] div[role="slider"] { background-color: #38BDF8 !important; }
-    div[data-testid="stSlider"] div[data-testid="stSliderTrack"] > div > div { background-color: #38BDF8 !important; }
-    /* 체크박스 체크되었을 때 배경색 */
+    /* 포커스 되었을 때 테두리 */
+    div[data-baseweb="select"] > div { background-color: #1E293B !important; color: white !important; border-color: #334155 !important; }
+    div[data-baseweb="select"] > div:focus-within { border-color: #38BDF8 !important; }
+
+    /* 4. [긴급 수리] 슬라이더 빨간색 선과 붉은 숫자 완벽 차단 */
+    /* 슬라이더 채워지는 바 */
+    div[data-testid="stSliderTrack"] > div > div { background-color: #38BDF8 !important; }
+    /* 슬라이더 둥근 손잡이 */
+    div[role="slider"] { background-color: #38BDF8 !important; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important; }
+    /* 슬라이더 위에 뜨는 빨간색 숫자 텍스트 제거 및 블루화 */
+    div[data-testid="stSlider"] div { color: #38BDF8 !important; }
+    
+    /* 5. 체크박스 테두리 및 체크 색상 */
     div[data-testid="stCheckbox"] input[type="checkbox"]:checked + div { background-color: #38BDF8 !important; border-color: #38BDF8 !important; }
 
-    /* 6. 메인 매칭 버튼 스타일 */
+    /* 6. 메인 매칭 버튼 */
     .stButton>button { 
         width: 100%; 
         background-color: #0284C7; 
@@ -51,23 +59,15 @@ st.markdown("""
         height: 3.5rem; 
         border-radius: 6px; 
         border: none;
-        letter-spacing: 1px;
         transition: 0.3s;
     }
     .stButton>button:hover { background-color: #0369A1; color: white; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
     
     /* 7. 통계 지표 박스 */
-    div[data-testid="stMetric"] { 
-        background-color: #1E293B; 
-        border: 1px solid #334155; 
-        padding: 20px; 
-        border-radius: 8px; 
-        text-align: center;
-    }
+    div[data-testid="stMetric"] { background-color: #1E293B; border: 1px solid #334155; padding: 20px; border-radius: 8px; text-align: center; }
     div[data-testid="stMetricLabel"] { color: #94A3B8 !important; }
     div[data-testid="stMetricValue"] { color: #F8FAFC !important; font-weight: 800; }
     
-    /* 구분선 */
     hr { border-color: #334155; }
     </style>
 """, unsafe_allow_html=True)
@@ -101,7 +101,6 @@ st.title("OTT CONTENTS SELECTOR")
 st.markdown("<p class='subtitle'>사용자 맞춤형 콘텐츠 분석 및 추천 알고리즘 시스템</p>", unsafe_allow_html=True)
 st.write("---")
 
-# 세션 상태 초기화
 if 'search_clicked' not in st.session_state:
     st.session_state.search_clicked = False
 
@@ -144,7 +143,6 @@ st.write("---")
 # ==========================================
 if st.session_state.search_clicked:
     
-    # 필터링 조건 연산
     filtered_df = df.copy()
     filtered_df = filtered_df[filtered_df['카테고리'].isin(user_category)]
     filtered_df = filtered_df[filtered_df['플랫폼'].isin(user_platform)]
@@ -160,10 +158,8 @@ if st.session_state.search_clicked:
     if filtered_df.empty:
         st.error("설정하신 조건과 일치하는 콘텐츠 정보가 존재하지 않습니다. 조건을 재설정해 주십시오.")
     else:
-        # 평점순 정렬
         result_df = filtered_df.sort_values(by='평점', ascending=False)
         
-        # 핵심 메트릭 지표
         metric_col1, metric_col2, metric_col3 = st.columns(3)
         with metric_col1:
             st.metric(label="매칭된 총 작품 수", value=f"{len(filtered_df)} UNIT")
@@ -174,14 +170,12 @@ if st.session_state.search_clicked:
             
         st.write("")
         
-        # 데이터프레임 노출
         st.dataframe(
             result_df[['플랫폼', '카테고리', '제목', '장르', '시간(분)', '평점', '연령제한']],
             use_container_width=True,
             hide_index=True
         )
         
-        # 하단 통계 그래프 (스카이 블루 단색 차트)
         st.write("")
         st.write("▼ **플랫폼별 추천 비중 통계**")
         st.bar_chart(filtered_df['플랫폼'].value_counts(), color="#38BDF8")
