@@ -3,23 +3,57 @@ import pandas as pd
 import time
 
 # ==========================================
-# 1. 페이지 기본 설정 및 디자인 테마
+# 1. 페이지 기본 설정 및 시네마 다크 테마 CSS
 # ==========================================
 st.set_page_config(
-    page_title="OTT-Finder | 취향 매칭", 
+    page_title="OTT CONTENTS SELECTOR", 
     layout="wide", 
-    page_icon="🍿"
+    initial_sidebar_state="collapsed"
 )
 
-# 깔끔하고 모던한 UI를 위한 CSS
+# 영화관 무드를 내기 위한 커스텀 다크 CSS 스타일링
 st.markdown("""
     <style>
-    .main .block-container { padding-top: 3rem; padding-bottom: 3rem; max-width: 1000px; }
-    h1 { color: #E50914; font-weight: 800; text-align: center; }
-    .subtitle { text-align: center; color: #666; margin-bottom: 2rem; }
-    .stButton>button { width: 100%; background-color: #E50914; color: white; font-weight: bold; height: 3rem; border-radius: 8px; border: none; }
-    .stButton>button:hover { background-color: #b80710; color: white; }
-    .box { background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    /* 전체 배경 및 텍스트 색상 제어 */
+    .main { background-color: #141414; color: #FFFFFF; }
+    .main .block-container { padding-top: 4rem; padding-bottom: 4rem; max-width: 950px; }
+    
+    /* 타이틀 및 폰트 스타일 */
+    h1 { color: #E50914; font-weight: 900; letter-spacing: -1px; text-align: center; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    h3 { color: #FFFFFF; font-weight: 700; margin-top: 2rem; border-left: 4px solid #E50914; padding-left: 10px; }
+    .subtitle { text-align: center; color: #A3A3A3; font-size: 1.1rem; margin-bottom: 3rem; }
+    
+    /* 입력창 및 라벨 색상 조정 */
+    label, .stMultiSelect label, .stSlider label, .stCheckbox label { color: #E5E5E5 !important; font-weight: 600; }
+    
+    /* 대형 버튼 스타일 (영화관 매표소 느낌) */
+    .stButton>button { 
+        width: 100%; 
+        background-color: #E50914; 
+        color: white; 
+        font-weight: 700; 
+        font-size: 1.1rem;
+        height: 3.5rem; 
+        border-radius: 4px; 
+        border: none;
+        letter-spacing: 1px;
+        transition: 0.3s;
+    }
+    .stButton>button:hover { background-color: #B81D24; color: white; box-shadow: 0 0 15px rgba(229, 9, 20, 0.4); }
+    
+    /* 통계 지표 박스 */
+    div[data-testid="stMetric"] { 
+        background-color: #1F1F1F; 
+        border: 1px solid #2F2F2F; 
+        padding: 20px; 
+        border-radius: 6px; 
+        text-align: center;
+    }
+    div[data-testid="stMetricLabel"] { color: #A3A3A3 !important; }
+    div[data-testid="stMetricValue"] { color: #FFFFFF !important; font-weight: 800; }
+    
+    /* 구분선 */
+    hr { border-color: #2F2F2F; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -48,56 +82,54 @@ df = load_data()
 # ==========================================
 # 3. 메인 화면 타이틀
 # ==========================================
-st.title("🎬 OTT-Finder")
-st.markdown("<p class='subtitle'>당신의 취향을 분석하여 딱 맞는 콘텐츠를 찾아드립니다.</p>", unsafe_allow_html=True)
+st.title("CINEMA OTT INDEX")
+st.markdown("<p class='subtitle'>사용자 맞춤형 콘텐츠 분석 및 추천 알고리즘 시스템</p>", unsafe_allow_html=True)
 st.write("---")
 
-# Session State(상태 유지)를 활용해 버튼 클릭 여부 추적
-if 'clicked' not in st.session_state:
-    st.session_state.clicked = False
+# 세션 상태 초기화
+if 'search_clicked' not in st.session_state:
+    st.session_state.search_clicked = False
 
-def click_button():
-    st.session_state.clicked = True
+def trigger_search():
+    st.session_state.search_clicked = True
 
 # ==========================================
-# 4. [1단계] 취향 선택 창 (처음에만 집중해서 보이도록)
+# 4. [1단계] 조건 설정 섹션
 # ==========================================
-st.markdown("### 🍿 Step 1. 오늘의 시청 스타일 선택")
+st.markdown("### 01. 선호 시청 환경 설정")
 
-# 깔끔하게 구획을 나누기 위한 컨테이너
 with st.container():
-    col1, col2 = st.columns(2, gap="medium")
+    col1, col2 = st.columns(2, gap="large")
     
     with col1:
         user_category = st.multiselect(
-            "🗂️ 보고 싶은 콘텐츠 종류", 
+            "콘텐츠 유형", 
             options=['영화', '드라마', '예능'], 
             default=['영화', '드라마']
         )
         user_platform = st.multiselect(
-            "📱 구독 중인 OTT 플랫폼", 
+            "보유 중인 플랫폼 디바이스", 
             options=['넷플릭스', '티빙', '디즈니+', '유튜브'], 
             default=['넷플릭스', '티빙']
         )
         
     with col2:
         user_time = st.slider(
-            "⏳ 오늘 쓸 수 있는 시간 (최대 몇 분?)", 
-            min_value=30, max_value=200, value=120, step=10
+            "최대 가용 시간 (분 단위)", 
+            min_value=30, max_value=200, value=130, step=10
         )
-        user_age = st.checkbox("🔞 청소년 관람불가 콘텐츠는 제외할래요", value=False)
+        user_age = st.checkbox("청소년 관람불가 등급 제외", value=False)
 
 st.write("")
-# 추천 받기 버튼 (누르면 click_button 함수 실행)
-st.button("✨ 내 취향에 맞는 콘텐츠 추천받기", on_click=click_button)
+st.button("MATCHING CONTENT", on_click=trigger_search)
 st.write("---")
 
 # ==========================================
-# 5. [2단계] 결과 출력 창 (버튼을 누른 후에만 등장!)
+# 5. [2단계] 결과 분석 및 추천 테이블
 # ==========================================
-if st.session_state.clicked:
+if st.session_state.search_clicked:
     
-    # 데이터 필터링 조건 적용
+    # 필터링 조건 연산
     filtered_df = df.copy()
     filtered_df = filtered_df[filtered_df['카테고리'].isin(user_category)]
     filtered_df = filtered_df[filtered_df['플랫폼'].isin(user_platform)]
@@ -105,37 +137,36 @@ if st.session_state.clicked:
     if user_age:
         filtered_df = filtered_df[filtered_df['연령제한'] != '청불']
 
-    # 애니메이션 효과처럼 보이도록 분석 중 메세지 띄우기 (발표용 꿀팁)
-    with st.spinner('🎯 당신의 시청 취향 데이터를 분석하는 중입니다...'):
-        time.sleep(1) # 1초 대기 효과
+    with st.spinner('데이터베이스 쿼리 분석 중...'):
+        time.sleep(0.8)
         
-    st.markdown("### 📊 Step 2. 취향 분석 및 추천 결과")
+    st.markdown("### 02. 알고리즘 매칭 결과 및 데이터 분석")
     
     if filtered_df.empty:
-        st.error("🧐 선택하신 조건에 맞는 콘텐츠가 데이터베이스에 없습니다. 가용 시간을 늘리거나 플랫폼을 추가해 보세요!")
+        st.error("설정하신 조건과 일치하는 콘텐츠 정보가 존재하지 않습니다. 조건을 재설정해 주십시오.")
     else:
-        # 평점 높은 순 정렬
+        # 평점순 정렬
         result_df = filtered_df.sort_values(by='평점', ascending=False)
         
-        # 지표 카드 시각화
+        # 핵심 메트릭 지표
         metric_col1, metric_col2, metric_col3 = st.columns(3)
         with metric_col1:
-            st.metric(label="🎯 매칭된 작품 수", value=f"{len(filtered_df)}개")
+            st.metric(label="매칭된 총 작품 수", value=f"{len(filtered_df)} UNIT")
         with metric_col2:
-            st.metric(label="⭐ 추천 카테고리 평균 평점", value=f"{filtered_df['평점'].mean():.1f}/100")
+            st.metric(label="추천 집합 평균 평점", value=f"{filtered_df['평점'].mean():.1f} / 100")
         with metric_col3:
-            st.metric(label="🎬 가장 많이 추천된 플랫폼", value=f"{filtered_df['플랫폼'].mode()[0]}")
+            st.metric(label="최적 매칭 플랫폼", value=f"{filtered_df['플랫폼'].mode()[0]}")
             
         st.write("")
         
-        # 추천 리스트 표 출력
+        # 데이터프레임 노출 (어두운 테마에 맞춰 스트림릿이 자동 최적화)
         st.dataframe(
             result_df[['플랫폼', '카테고리', '제목', '장르', '시간(분)', '평점', '연령제한']],
             use_container_width=True,
             hide_index=True
         )
         
-        # 하단 미니 차트
+        # 하단 통계 그래프 (시네마 레드 단색 차트)
         st.write("")
-        st.write("📌 **추천 콘텐츠의 플랫폼별 비중**")
+        st.write("▼ **플랫폼별 추천 비중 통계**")
         st.bar_chart(filtered_df['플랫폼'].value_counts(), color="#E50914")
