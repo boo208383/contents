@@ -38,7 +38,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 방대한 45개 리얼 트렌드 데이터셋
+# 2. 방대한 45개 리얼 트렌드 데이터셋 (대표 장르 그룹 추가)
 # ==========================================
 @st.cache_data
 def load_massive_data():
@@ -62,7 +62,19 @@ def load_massive_data():
             '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마', '드라마',
             '예능', '예능', '예능', '예능', '예능', '예능', '예능', '예능', '예능', '예능', '예능', '예능', '예능', '예능', '예능'
         ],
-        '장르': [
+        # 사용자가 고를 5대 대표 장르 맵핑
+        '장르그룹': [
+            '스릴러/공포', '드라마/로맨스', '액션/SF', '코미디/토크', '액션/SF',
+            '스릴러/공포', '드라마/로맨스', '액션/SF', '액션/SF', '액션/SF',
+            '액션/SF', '드라마/로맨스', '스릴러/공포', '스릴러/공포', '드라마/로맨스',
+            '스릴러/공포', '드라마/로맨스', '드라마/로맨스', '스릴러/공포', '액션/SF',
+            '스릴러/공포', '액션/SF', '드라마/로맨스', '드라마/로맨스', '액션/SF',
+            '예능/리얼리티', '스릴러/공포', '스릴러/공포', '드라마/로맨스', '드라마/로맨스',
+            '예능/리얼리티', '코미디/토크', '코미디/토크', '예능/리얼리티', '예능/리얼리티',
+            '예능/리얼리티', '코미디/토크', '예능/리얼리티', '코미디/토크', '예능/리얼리티',
+            '코미디/토크', '예능/리얼리티', '스릴러/공포', '스릴러/공포', '예능/리얼리티'
+        ],
+        '세부장르': [
             '오컬트/스릴러', '역사/드라마', '액션/범죄', '애니메이션/코미디', 'SF/판타지',
             '스릴러/드라마', '애니메이션/로맨스', '애니메이션/액션', '액션/드라마', 'SF/판타지',
             'SF/액션', '로맨스/뮤지컬', '스릴러/드라마', '스릴러/범죄', '로맨스/미스터리',
@@ -75,7 +87,7 @@ def load_massive_data():
         ],
         '플랫폼': [
             '티빙', '웨이브', '디즈니+', '디즈니+', '웨이브',
-            '넷넷플릭스', '디즈니+', '디즈니+', '넷플릭스', '디즈니+',
+            '넷플릭스', '디즈니+', '디즈니+', '넷플릭스', '디즈니+',
             '넷플릭스', '왓챠', '넷플릭스', '왓챠', '티빙',
             '넷플릭스', '티빙', '티빙', '넷플릭스', '디즈니+',
             '티빙', '넷플릭스', 'tvN', '디즈니+', '디즈니+',
@@ -103,19 +115,13 @@ def load_massive_data():
     return pd.DataFrame(data)
 
 df = load_massive_data()
-
-# 슬래시(/)로 묶인 장르를 낱개로 쪼개어 중복 없는 리스트 자동 생성
-genres_set = set()
-for g_str in df['장르']:
-    for g in g_str.split('/'):
-        genres_set.add(g.strip())
-all_genres = sorted(list(genres_set))
+genre_groups = ['드라마/로맨스', '액션/SF', '스릴러/공포', '예능/리얼리티', '코미디/토크']
 
 # ==========================================
 # 3. 메인 화면 타이틀
 # ==========================================
 st.title("OTT CONTENTS SELECTOR")
-st.markdown("<p class='subtitle'>45개의 실시간 트렌드 데이터를 기반으로 한 맞춤형 알고리즘 시스템</p>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>핵심 5대 장르 그룹 및 45개 트렌드 데이터를 기반으로 한 추천 알고리즘</p>", unsafe_allow_html=True)
 st.write("---")
 
 if 'search_clicked' not in st.session_state:
@@ -143,10 +149,10 @@ with st.container():
             options=['넷플릭스', '티빙', '디즈니+', '웨이브', '왓챠', '유튜브'], 
             default=['넷플릭스', '티빙', '유튜브']
         )
-        # 쪼개진 단일 장르 리스트를 선택지로 제공
-        user_genres = st.multiselect(
-            "선호 장르 선택 (미선택 시 전체 장르 대상)",
-            options=all_genres,
+        # 깔끔하게 정리된 5가지 그룹만 선택지로 제공
+        user_genre_group = st.multiselect(
+            "선호 장르 대분류 (미선택 시 전체 장르 대상)",
+            options=genre_groups,
             default=[]
         )
         
@@ -172,17 +178,15 @@ if st.session_state.search_clicked:
     filtered_df = filtered_df[filtered_df['플랫폼'].isin(user_platform)]
     filtered_df = filtered_df[filtered_df['시간(분)'] <= user_time]
     
-    # [개선된 로직] 사용자가 선택한 단일 장르가 복합 장르 텍스트 내에 하나라도 포함되어 있는지 검사
-    if user_genres:
-        filtered_df = filtered_df[filtered_df['장르'].apply(
-            lambda x: any(g in [item.strip() for item in x.split('/')] for g in user_genres)
-        )]
+    # 깔끔해진 대분류 장르 필터링
+    if user_genre_group:
+        filtered_df = filtered_df[filtered_df['장르그룹'].isin(user_genre_group)]
         
     if user_age:
         filtered_df = filtered_df[filtered_df['연령제한'] != '청불']
 
     with st.spinner('대용량 콘텐츠 데이터베이스 쿼리 연산 중...'):
-        time.sleep(1.2)
+        time.sleep(1.0)
         
     st.markdown("### 02. 알고리즘 매칭 결과 및 데이터 분석")
     
@@ -201,8 +205,9 @@ if st.session_state.search_clicked:
             
         st.write("")
         
+        # 표에는 사용자가 고른 '장르그룹' 대신 원래 디테일한 '세부장르'가 나오도록 출력하여 전문성 유지
         st.dataframe(
-            result_df[['플랫폼', '카테고리', '제목', '장르', '시간(분)', '평점', '연령제한']],
+            result_df[['플랫폼', '카테고리', '제목', '세부장르', '시간(분)', '평점', '연령제한']],
             use_container_width=True,
             hide_index=True
         )
@@ -216,5 +221,5 @@ if st.session_state.search_clicked:
             
         with chart_col2:
             st.write("▼ **추천 작품들의 장르별 평균 평점 분포**")
-            genre_stats = filtered_df.groupby('장르')['평점'].mean().sort_values(ascending=False)
+            genre_stats = filtered_df.groupby('장르그룹')['평점'].mean().sort_values(ascending=False)
             st.line_chart(genre_stats)
