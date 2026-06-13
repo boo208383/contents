@@ -11,22 +11,37 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 세련된 블루 톤의 다크 모드 스타일링
+# 전체 UI 및 세부 입력창(선택지) 색상까지 제어하는 CSS
 st.markdown("""
     <style>
-    /* 전체 배경 및 텍스트 색상 (딥 미드나잇 그레이) */
+    /* 1. 전체 배경 및 텍스트 (딥 미드나잇 그레이) */
     .main { background-color: #0F172A; color: #F8FAFC; }
     .main .block-container { padding-top: 4rem; padding-bottom: 4rem; max-width: 950px; }
     
-    /* 타이틀 및 폰트 스타일 (네온 블루 포인트) */
+    /* 2. 타이틀 및 헤더 스타일 */
     h1 { color: #38BDF8; font-weight: 900; letter-spacing: -0.5px; text-align: center; font-family: 'Inter', sans-serif; }
     h3 { color: #F8FAFC; font-weight: 700; margin-top: 2rem; border-left: 4px solid #38BDF8; padding-left: 10px; }
     .subtitle { text-align: center; color: #94A3B8; font-size: 1.1rem; margin-bottom: 3rem; }
     
-    /* 입력창 및 라벨 색상 조정 */
+    /* 3. 기본 라벨 폰트 색상 조정 */
     label, .stMultiSelect label, .stSlider label, .stCheckbox label { color: #E2E8F0 !important; font-weight: 600; }
     
-    /* 세련된 딥 블루 버튼 스타일 */
+    /* 4. [핵심] 멀티셀렉트(선택창) 내부 색상 커스텀 */
+    /* 선택박스 테두리 포커스 되었을 때 */
+    div[data-baseweb="select"] > div:focus-within { border-color: #38BDF8 !important; box-shadow: 0 0 0 1px #38BDF8 !important; }
+    /* 멀티셀렉트 내부에 선택된 칩(Chip)의 배경색과 글자색 */
+    div[data-testid="stMultiSelectTag"] { background-color: #1E293B !important; border: 1px solid #334155 !important; color: #38BDF8 !important; }
+    /* 칩 내부의 x 삭제 버튼 색상 */
+    div[data-testid="stMultiSelectTag"] span { color: #38BDF8 !important; }
+    
+    /* 5. [핵심] 슬라이더 및 체크박스 색상 커스텀 */
+    /* 슬라이더 채워지는 바와 조절 핸들 색상 */
+    div[data-testid="stSlider"] div[role="slider"] { background-color: #38BDF8 !important; }
+    div[data-testid="stSlider"] div[data-testid="stSliderTrack"] > div > div { background-color: #38BDF8 !important; }
+    /* 체크박스 체크되었을 때 배경색 */
+    div[data-testid="stCheckbox"] input[type="checkbox"]:checked + div { background-color: #38BDF8 !important; border-color: #38BDF8 !important; }
+
+    /* 6. 메인 매칭 버튼 스타일 */
     .stButton>button { 
         width: 100%; 
         background-color: #0284C7; 
@@ -41,7 +56,7 @@ st.markdown("""
     }
     .stButton>button:hover { background-color: #0369A1; color: white; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
     
-    /* 통계 지표 박스 */
+    /* 7. 통계 지표 박스 */
     div[data-testid="stMetric"] { 
         background-color: #1E293B; 
         border: 1px solid #334155; 
@@ -161,12 +176,3 @@ if st.session_state.search_clicked:
         
         # 데이터프레임 노출
         st.dataframe(
-            result_df[['플랫폼', '카테고리', '제목', '장르', '시간(분)', '평점', '연령제한']],
-            use_container_width=True,
-            hide_index=True
-        )
-        
-        # 하단 통계 그래프 (스카이 블루 단색 차트)
-        st.write("")
-        st.write("▼ **플랫폼별 추천 비중 통계**")
-        st.bar_chart(filtered_df['플랫폼'].value_counts(), color="#38BDF8")
